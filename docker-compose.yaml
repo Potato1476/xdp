@@ -7,7 +7,7 @@ services:
     container_name: sender
     command: [ "sh", "-c", "sleep infinity" ]
     volumes:
-      - ./1000mb.txt:/app/1000mb.txt
+      - ./video.mp4:/app/video.mp4
       - ./sender_udp.cpp:/app/sender_udp.cpp
       - ./sender_tcp.cpp:/app/sender_tcp.cpp
     networks:
@@ -22,7 +22,7 @@ services:
     container_name: receiver
     command: [ "sh", "-c", "sleep infinity" ]
     volumes:
-      - ./1000mb.txt:/app/1000mb.txt
+      - ./video.mp4:/app/video.mp4
       - ./receiver_udp.cpp:/app/receiver_udp.cpp
       - ./receiver_tcp.cpp:/app/receiver_tcp.cpp
     networks:

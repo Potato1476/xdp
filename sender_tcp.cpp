@@ -41,13 +41,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // // Tối ưu TCP socket
-    // int flag = 1;
-    // setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));  // Disable Nagle
-    
-    // int sendbuff = 2 * 1024 * 1024;  // 2MB send buffer
-    // setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff));
-
     // Cấu hình địa chỉ receiver
     struct sockaddr_in receiver_addr;
     memset(&receiver_addr, 0, sizeof(receiver_addr));
@@ -60,6 +53,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Bắt đầu đo thời gian
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     // Kết nối đến receiver
     std::cout << "Đang kết nối đến " << receiver_ip << ":" << port << "..." << std::endl;
     if (connect(sock, (struct sockaddr*)&receiver_addr, sizeof(receiver_addr)) < 0) {
@@ -69,13 +65,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Đã kết nối thành công!" << std::endl;
-
-    // // Gửi kích thước file trước
-    // uint64_t file_size_net = file_size;
-    // send(sock, &file_size_net, sizeof(file_size_net), 0);
-
-    // Bắt đầu đo thời gian
-    auto start_time = std::chrono::high_resolution_clock::now();
 
     // Buffer để đọc và gửi
     char buffer[CHUNK_SIZE];
