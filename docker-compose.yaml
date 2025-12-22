@@ -23,6 +23,7 @@ services:
     volumes:
       - ./video.mp4:/app/video.mp4
       - ./receiver/:/app/receiver/
+      - ./compare.cpp:/app/compare.cpp
     networks:
       xdp_net:
         ipv4_address: 172.22.0.101

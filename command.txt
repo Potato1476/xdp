@@ -13,3 +13,6 @@ g++ -o receiver_xdp receiver/receiver_xdp.cpp
 ./receiver_tcp 8888 tcp_video.mp4 video.mp4
 ./receiver_udp 9999 udp_video.mp4 video.mp4
 ./receiver_xdp 9999 xdp_video.mp4 video.mp4
+
+g++ -o compare compare.cpp
+./compare video.mp4 xdp_video.mp4
