@@ -8,8 +8,7 @@ services:
     command: [ "sh", "-c", "sleep infinity" ]
     volumes:
       - ./video.mp4:/app/video.mp4
-      - ./sender_udp.cpp:/app/sender_udp.cpp
-      - ./sender_tcp.cpp:/app/sender_tcp.cpp
+      - ./sender/:/app/sender/
     networks:
       xdp_net:
         ipv4_address: 172.22.0.100
@@ -23,8 +22,7 @@ services:
     command: [ "sh", "-c", "sleep infinity" ]
     volumes:
       - ./video.mp4:/app/video.mp4
-      - ./receiver_udp.cpp:/app/receiver_udp.cpp
-      - ./receiver_tcp.cpp:/app/receiver_tcp.cpp
+      - ./receiver/:/app/receiver/
     networks:
       xdp_net:
         ipv4_address: 172.22.0.101

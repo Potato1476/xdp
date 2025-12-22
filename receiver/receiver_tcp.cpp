@@ -41,17 +41,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // // Cho phép reuse address
-    // int opt = 1;
-    // setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-    // // Tối ưu TCP
-    // int flag = 1;
-    // setsockopt(server_sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-    
-    // int recvbuff = 2 * 1024 * 1024;  // 2MB receive buffer
-    // setsockopt(server_sock, SOL_SOCKET, SO_RCVBUF, &recvbuff, sizeof(recvbuff));
-
     // Bind socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -88,19 +77,6 @@ int main(int argc, char* argv[]) {
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
     std::cout << "Đã kết nối từ: " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
-
-    // // Nhận kích thước file
-    // uint64_t file_size = 0;
-    // ssize_t recv_size = recv(client_sock, &file_size, sizeof(file_size), MSG_WAITALL);
-    // if (recv_size != sizeof(file_size)) {
-    //     std::cerr << "Không thể nhận thông tin kích thước file" << std::endl;
-    //     close(client_sock);
-    //     close(server_sock);
-    //     return 1;
-    // }
-
-    // std::cout << "Kích thước file: " << file_size << " bytes (" 
-    //           << std::fixed << std::setprecision(2) << file_size / 1024.0 / 1024.0 << " MB)" << std::endl;
 
     // Mở file để ghi
     std::ofstream file(output_file, std::ios::binary);

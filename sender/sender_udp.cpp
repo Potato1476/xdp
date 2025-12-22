@@ -94,9 +94,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Đợi một chút để đảm bảo packets cuối được gửi
-    usleep(100000);  // 100ms
-
     // Kết thúc đo thời gian
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
