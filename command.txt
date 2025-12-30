@@ -6,9 +6,9 @@ g++ -o receiver_tcp receiver/receiver_tcp.cpp
 g++ -o receiver_udp receiver/receiver_udp.cpp
 g++ -o receiver_xdp receiver/receiver_xdp.cpp
 
-./sender_tcp video.mp4 172.22.0.101 8888
-./sender_udp video.mp4 172.22.0.101 9999
-./sender_xdp video.mp4 172.22.0.101 9999
+./sender_tcp video.mp4 172.23.0.101 8888
+./sender_udp video.mp4 172.23.0.101 9999
+./sender_xdp video.mp4 172.23.0.101 9999
 
 ./receiver_tcp 8888 tcp_video.mp4 video.mp4
 ./receiver_udp 9999 udp_video.mp4 video.mp4

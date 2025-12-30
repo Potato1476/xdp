@@ -5,13 +5,17 @@ services:
       context: .
     image: ubuntu-xdp
     container_name: sender
-    command: [ "sh", "-c", "sleep infinity" ]
+    cap_add:
+      - NET_ADMIN
+    command: [ "sh", "-c", "ip route add 172.23.0.0/16 via 172.22.0.2 && ln -sf /app/workspace/video.mp4 /app/video.mp4 && sleep infinity" ]
     volumes:
-      - ./video.mp4:/app/video.mp4
+      - .:/app/workspace
       - ./sender/:/app/sender/
     networks:
-      xdp_net:
+      netA:
         ipv4_address: 172.22.0.100
+    depends_on:
+      - firewall
 
   receiver:
     build:
@@ -19,18 +23,48 @@ services:
       context: .
     image: ubuntu-xdp
     container_name: receiver
-    command: [ "sh", "-c", "sleep infinity" ]
+    cap_add:
+      - NET_ADMIN
+    command: [ "sh", "-c", "ip route add 172.22.0.0/16 via 172.23.0.2 && ln -sf /app/workspace/video.mp4 /app/video.mp4 && sleep infinity" ]
     volumes:
-      - ./video.mp4:/app/video.mp4
+      - .:/app/workspace
       - ./receiver/:/app/receiver/
       - ./compare.cpp:/app/compare.cpp
     networks:
-      xdp_net:
-        ipv4_address: 172.22.0.101
+      netB:
+        ipv4_address: 172.23.0.101
+    depends_on:
+      - firewall
+
+  firewall:
+    build:
+      context: ./firewall
+    container_name: firewall
+    privileged: true
+    environment:
+      # Packet loss rate (0-100%)
+      - PACKET_LOSS_RATE=${PACKET_LOSS_RATE:-5}
+      # Interval to check for traffic (seconds, default: 100ms for large files)
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-0.1}
+      # Time to wait before disabling packet loss when no traffic (seconds, default: 3s for large files)
+      - IDLE_TIMEOUT=${IDLE_TIMEOUT:-3.0}
+      # Network interfaces
+      - INTERFACE_A=${INTERFACE_A:-eth0}
+      - INTERFACE_B=${INTERFACE_B:-eth1}
+    networks:
+      netA:
+        ipv4_address: 172.22.0.2
+      netB:
+        ipv4_address: 172.23.0.2
 
 networks:
-  xdp_net:
+  netA:
     driver: bridge
     ipam:
       config:
         - subnet: 172.22.0.0/16
+  netB:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
