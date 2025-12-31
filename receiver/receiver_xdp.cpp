@@ -13,7 +13,7 @@
 #define CHUNK_SIZE 972
 #define TIMEOUT_SEC 5
 #define HEADER_SIZE 4
-#define WINDOW_SIZE 10
+#define WINDOW_SIZE 1000
 
 // Handshake flags (1 byte)
 #define SYN 0x01   // 0000 0001 - Yêu cầu kết nối

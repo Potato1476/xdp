@@ -13,10 +13,11 @@
 
 #define CHUNK_SIZE 972
 #define HEADER_SIZE 4
-#define ACK_TIMEOUT_MS 500
-#define WINDOW_SIZE 10
+#define ACK_TIMEOUT_MS 30
+#define WINDOW_SIZE 1000
 #define HANDSHAKE_TIMEOUT_MS 2000
 #define MAX_HANDSHAKE_RETRIES 5
+#define MAX_ACKS_PER_LOOP 100
 
 // Handshake flags (1 byte)
 #define SYN 0x01   // 0000 0001 - Yêu cầu kết nối
@@ -164,8 +165,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Đổi timeout cho data transfer
-    tv.tv_usec = 10000; // 10ms
+    // Đổi timeout cho data transfer - rất ngắn để không block
+    tv.tv_usec = 1000; // 1ms - không block quá lâu khi chờ ACK
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     // Bắt đầu đo thời gian (SAU khi handshake hoàn tất)
@@ -213,7 +214,8 @@ int main(int argc, char* argv[]) {
             next_seq_num++;
         }
 
-        // Kiểm tra timeout và gửi lại
+        // Kiểm tra timeout và gửi lại (batch retransmit)
+        std::vector<uint32_t> to_retransmit;
         for (auto& pair : window) {
             uint32_t seq = pair.first;
             WindowPacket& pkt = pair.second;
@@ -222,35 +224,49 @@ int main(int argc, char* argv[]) {
                 auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - pkt.send_time);
                 
                 if (elapsed.count() >= ACK_TIMEOUT_MS) {
-                    pkt.send_time = now;
-                    pkt.retry_count++;
-                    
-                    sendto(sock, pkt.data.data(), pkt.data.size(), 0,
-                          (struct sockaddr*)&receiver_addr, sizeof(receiver_addr));
-                    total_retransmissions++;
+                    to_retransmit.push_back(seq);
                 }
             }
         }
-
-        // Nhận ACK
-        AckPacket ack;
-        struct sockaddr_in ack_addr;
-        socklen_t ack_addr_len = sizeof(ack_addr);
         
-        ssize_t ack_recv = recvfrom(sock, &ack, sizeof(ack), 0,
-                                   (struct sockaddr*)&ack_addr, &ack_addr_len);
-
-        if (ack_recv > 0) {
-            uint32_t ack_num = ack.ack_num;
-            acks_received++;
-
-            if (window.find(ack_num) != window.end()) {
-                window[ack_num].acked = true;
+        // Batch retransmit để tăng hiệu suất
+        for (uint32_t seq : to_retransmit) {
+            if (window.find(seq) != window.end() && !window[seq].acked) {
+                window[seq].send_time = now;
+                window[seq].retry_count++;
+                sendto(sock, window[seq].data.data(), window[seq].data.size(), 0,
+                      (struct sockaddr*)&receiver_addr, sizeof(receiver_addr));
+                total_retransmissions++;
             }
+        }
+
+        // Nhận nhiều ACK cùng lúc để tăng throughput
+        int acks_processed = 0;
+        while (acks_processed < MAX_ACKS_PER_LOOP) {
+            AckPacket ack;
+            struct sockaddr_in ack_addr;
+            socklen_t ack_addr_len = sizeof(ack_addr);
             
-            while (window.find(base) != window.end() && window[base].acked) {
-                window.erase(base);
-                base++;
+            ssize_t ack_recv = recvfrom(sock, &ack, sizeof(ack), 0,
+                                       (struct sockaddr*)&ack_addr, &ack_addr_len);
+
+            if (ack_recv > 0) {
+                uint32_t ack_num = ack.ack_num;
+                acks_received++;
+                acks_processed++;
+
+                if (window.find(ack_num) != window.end()) {
+                    window[ack_num].acked = true;
+                }
+                
+                // Update base khi nhận được ACK
+                while (window.find(base) != window.end() && window[base].acked) {
+                    window.erase(base);
+                    base++;
+                }
+            } else {
+                // Không còn ACK nào, thoát khỏi vòng lặp
+                break;
             }
         }
 
